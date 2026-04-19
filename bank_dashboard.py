@@ -8,8 +8,6 @@ st.set_page_config(page_title="Screening and Analytics", layout="wide", page_ico
 # ─────────────────────────────────────────────────────────────────────────────
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
-if "show_profile" not in st.session_state:
-    st.session_state.show_profile = False
 
 # ─────────────────────────────────────────────────────────────────────────────
 # LOGIN PAGE  — single unified HTML/CSS layout, Streamlit widgets overlaid
@@ -37,7 +35,8 @@ if not st.session_state.logged_in:
     }
     .login-left {
         flex:1;
-        background: linear-gradient(135deg,#0a2472 0%,#0e4d92 60%,#1a78c2 100%);
+        background: #020b4a url('https://images.unsplash.com/photo-1557804506-669a67965ba0?w=1200') center/cover no-repeat;
+        background-blend-mode: multiply;
         display:flex; flex-direction:column; justify-content:center;
         padding:60px 56px;
     }
@@ -96,29 +95,28 @@ if not st.session_state.logged_in:
     col_left, col_right = st.columns(2)
 
     with col_right:
-        # Vertical centering: push down ~30vh worth of space
+        # Vertical centering
         st.markdown("<div style='height:28vh'></div>", unsafe_allow_html=True)
         st.markdown('<div class="login-card-title">Login</div>', unsafe_allow_html=True)
 
-        # Card wrapper
-        st.markdown("""
-        <style>
-        /* Give the right col's widgets a card look */
-        section[data-testid="stMain"] > div > div > div:nth-child(2) .stTextInput input {
-            border-radius:8px; padding:12px 14px; background:#f1f5f9;
-            border:1px solid #e2e8f0; font-size:1rem;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-
-        st.text_input("", placeholder="Username", key="login_user",
-                      label_visibility="collapsed")
-        st.text_input("", placeholder="Password", type="password",
-                      key="login_pass", label_visibility="collapsed")
-
-        if st.button("Login", use_container_width=True, key="login_btn"):
-            st.session_state.logged_in = True
-            st.rerun()
+        # Narrow form: pad left and right so it's ~half the column width
+        pad, form_col, pad2 = st.columns([1, 2, 1])
+        with form_col:
+            st.markdown("""
+            <style>
+            section[data-testid="stMain"] .stTextInput input {
+                border-radius:8px; padding:12px 14px; background:#f1f5f9;
+                border:1px solid #e2e8f0; font-size:1rem;
+            }
+            </style>
+            """, unsafe_allow_html=True)
+            st.text_input("", placeholder="Username", key="login_user",
+                          label_visibility="collapsed")
+            st.text_input("", placeholder="Password", type="password",
+                          key="login_pass", label_visibility="collapsed")
+            if st.button("Login", use_container_width=True, key="login_btn"):
+                st.session_state.logged_in = True
+                st.rerun()
 
     st.stop()
 
@@ -192,30 +190,6 @@ table.ranking-table td.no-cell { text-align:center; color:#666; }
 /* ── CAMELS sub-items: indented ── */
 .camels-sub { margin-left:28px; border-left:2px solid #e5e7eb; padding-left:8px; margin-top:2px; }
 
-/* ── Profile overlay ── */
-.profile-overlay {
-    position:fixed; top:0; left:0; width:100vw; height:100vh;
-    background:rgba(0,0,0,0.40); z-index:8888;
-    display:flex; align-items:center; justify-content:center;
-}
-.profile-card {
-    background:#fff; border-radius:16px; padding:40px 36px;
-    width:380px; box-shadow:0 8px 40px rgba(0,0,0,0.18); text-align:center;
-}
-.profile-card h3 { color:#1a3a8f; font-size:1.4rem; font-weight:800; margin-bottom:24px; }
-.profile-card .btn-primary {
-    display:block; width:100%; padding:14px;
-    background:#2563eb; color:#fff; border-radius:8px;
-    font-weight:700; font-size:1rem; margin-bottom:12px;
-    border:none; cursor:pointer; text-decoration:none;
-}
-.profile-card .btn-outline {
-    display:block; width:100%; padding:13px;
-    background:#fff; color:#2563eb; border-radius:8px;
-    font-weight:700; font-size:1rem; margin-bottom:16px;
-    border:2px solid #2563eb; cursor:pointer; text-decoration:none;
-}
-
 /* preview empty */
 .preview-empty { color:#555; font-size:1rem; margin-top:10px; line-height:1.7; }
 </style>
@@ -236,39 +210,19 @@ all_banks = sorted(df["Bank"].unique().tolist())
 all_years = list(range(2010, 2025))
 
 # ─────────────────────────────────────────────────────────────────────────────
-# HEADER + AVATAR
+# HEADER + AVATAR (no popup)
 # ─────────────────────────────────────────────────────────────────────────────
 st.markdown('<div class="header-title">Screening and Analytics</div>', unsafe_allow_html=True)
 st.markdown('<hr style="margin-top:4px;margin-bottom:14px;border-color:#1a1a2e">', unsafe_allow_html=True)
 
 hcol1, hcol2 = st.columns([20, 1])
 with hcol2:
-    if st.button("👤", key="avatar_btn", help="Profile"):
-        st.session_state.show_profile = not st.session_state.show_profile
-
-# ─────────────────────────────────────────────────────────────────────────────
-# PROFILE POPUP  — overlay HTML + Streamlit Close button inside the card
-# ─────────────────────────────────────────────────────────────────────────────
-if st.session_state.show_profile:
     st.markdown("""
-    <div class="profile-overlay">
-      <div class="profile-card">
-        <h3>Profile Actions</h3>
-        <a class="btn-primary" href="#">Upload Template</a>
-        <a class="btn-outline" href="#">Download Template</a>
-        <!-- Streamlit button will render just below this card via st.columns trick -->
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Place "Close" button centred in viewport using columns
-    _, close_col, _ = st.columns([2, 1, 2])
-    with close_col:
-        # Extra top margin so the button lands inside the modal card visually
-        st.markdown("<div style='margin-top:-110px'></div>", unsafe_allow_html=True)
-        if st.button("Close", key="close_profile", use_container_width=True):
-            st.session_state.show_profile = False
-            st.rerun()
+    <div style="width:42px;height:42px;border-radius:50%;border:2px solid #555;
+                background:#fff;display:flex;align-items:center;justify-content:center;
+                font-size:1.4rem;cursor:default;box-shadow:0 2px 6px rgba(0,0,0,0.12)">
+      👤
+    </div>""", unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # SIDEBAR FILTERS
@@ -304,31 +258,17 @@ with st.sidebar:
         camels_state    = st.session_state.get("crit_camels",    False)
         stability_state = st.session_state.get("crit_stability", False)
 
-        # Bank Stability + inline "i" tooltip using HTML label trick
-        # We render the checkbox label ourselves so the ℹ️ sits right next to the text
+        # Bank Stability: render native checkbox (label visible) + floating tooltip icon
+        crit_stability = st.checkbox(
+            "Bank Stability",
+            value=stability_state,
+            disabled=camels_state,
+            key="crit_stability"
+        )
+        # Float the "i" icon to sit right after the label text using negative margin
         st.markdown("""
-        <style>
-        /* Hide default label of the Bank Stability checkbox, we show our own */
-        label[data-testid="stWidgetLabel"]:has(+ div #crit_stability) { display:none; }
-        </style>
-        """, unsafe_allow_html=True)
-
-        # Row: checkbox | "Bank Stability i"
-        bs_col, _ = st.columns([1, 0.01])
-        with bs_col:
-            crit_stability = st.checkbox(
-                "Bank Stability",
-                value=stability_state,
-                disabled=camels_state,
-                key="crit_stability"
-            )
-
-        # Overlay a custom label with tooltip immediately after
-        st.markdown("""
-        <div style="margin-top:-32px; margin-left:28px; font-size:0.9rem;
-                    display:flex; align-items:center; gap:0; pointer-events:none;">
-          <span>Bank Stability</span>
-          <div class="tooltip-wrap" style="pointer-events:all">
+        <div style="margin-top:-30px; margin-left:136px; display:inline-block;">
+          <div class="tooltip-wrap">
             <span class="info-icon">i</span>
             <div class="tooltip-box">
               <b>Measured using the Z-score</b>, which captures the buffer
@@ -340,7 +280,7 @@ with st.sidebar:
             </div>
           </div>
         </div>
-        <div style="height:6px"></div>
+        <div style="height:4px"></div>
         """, unsafe_allow_html=True)
 
         # CAMELS — disabled when Bank Stability is ticked
@@ -351,7 +291,7 @@ with st.sidebar:
             key="crit_camels"
         )
 
-        # CAMELS subsets — always visible, only enabled when CAMELS ticked
+        # CAMELS subsets — indented, only enabled when CAMELS ticked
         camels_items = [
             ("Capital Adequacy (C)",           "s_capital"),
             ("Asset Quality (A)",              "s_asset"),
@@ -360,10 +300,12 @@ with st.sidebar:
             ("Liquidity (L)",                  "s_liq"),
             ("Sensitivity to market risk (S)", "s_sens"),
         ]
-        st.markdown('<div class="camels-sub">', unsafe_allow_html=True)
-        for label, key in camels_items:
-            st.checkbox(label, value=False, disabled=not crit_camels, key=key)
-        st.markdown('</div>', unsafe_allow_html=True)
+        # Use a container with left padding to indent all subset checkboxes
+        with st.container():
+            st.markdown('<div style="margin-left:24px;padding-left:8px;border-left:2px solid #e5e7eb;">', unsafe_allow_html=True)
+            for label, key in camels_items:
+                st.checkbox(label, value=False, disabled=not crit_camels, key=key)
+            st.markdown('</div>', unsafe_allow_html=True)
 
         # Technical Default — permanently disabled
         st.markdown("""
