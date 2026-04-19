@@ -258,43 +258,38 @@ with st.sidebar:
         camels_state    = st.session_state.get("crit_camels",    False)
         stability_state = st.session_state.get("crit_stability", False)
 
-        # Bank Stability: hide native label, render full row as HTML overlay
+        # Bank Stability: use columns so checkbox + label + i icon are all on one line
         st.markdown("""
         <style>
-        div[data-testid="stCheckbox"]:has(input[aria-label="Bank Stability"]) label p {
-            visibility: hidden; font-size: 0;
-        }
-        div[data-testid="stCheckbox"]:has(input[aria-label="Bank Stability"]) {
-            display: flex; align-items: center;
-        }
+        /* Remove extra bottom padding from checkbox rows in Criteria */
+        div[data-testid="stCheckbox"] { margin-bottom: 2px !important; }
         </style>
         """, unsafe_allow_html=True)
 
-        crit_stability = st.checkbox(
-            "Bank Stability",
-            value=stability_state,
-            disabled=camels_state,
-            key="crit_stability"
-        )
-        # Replace the hidden label with our inline label + tooltip icon
-        st.markdown("""
-        <div style="margin-top:-28px; margin-left:28px; display:flex; align-items:center;
-                    gap:4px; font-size:0.9rem; line-height:1; pointer-events:none;">
-          <span>Bank Stability</span>
-          <div class="tooltip-wrap" style="pointer-events:all; line-height:1;">
-            <span class="info-icon">i</span>
-            <div class="tooltip-box">
-              <b>Measured using the Z-score</b>, which captures the buffer
-              a bank has against insolvency:<br><br>
-              (ROA + Equity/Assets) / σ_ROA (3 years)<br><br>
-              🔴 <b>High risk (Red):</b> Bottom 10% of banks with the lowest Z-scores<br>
-              🟡 <b>Medium risk (Yellow):</b> Next 40% of banks<br>
-              🟢 <b>Low risk (Green):</b> Remaining 50% of banks
+        bs_col, tip_col = st.columns([10, 1])
+        with bs_col:
+            crit_stability = st.checkbox(
+                "Bank Stability",
+                value=stability_state,
+                disabled=camels_state,
+                key="crit_stability"
+            )
+        with tip_col:
+            st.markdown("""
+            <div style="margin-top:6px;">
+              <div class="tooltip-wrap">
+                <span class="info-icon">i</span>
+                <div class="tooltip-box">
+                  <b>Measured using the Z-score</b>, which captures the buffer
+                  a bank has against insolvency:<br><br>
+                  (ROA + Equity/Assets) / σ_ROA (3 years)<br><br>
+                  🔴 <b>High risk (Red):</b> Bottom 10% of banks with the lowest Z-scores<br>
+                  🟡 <b>Medium risk (Yellow):</b> Next 40% of banks<br>
+                  🟢 <b>Low risk (Green):</b> Remaining 50% of banks
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-        <div style="height:6px"></div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
 
         # CAMELS — disabled when Bank Stability is ticked
         crit_camels = st.checkbox(
@@ -304,21 +299,21 @@ with st.sidebar:
             key="crit_camels"
         )
 
-        # CAMELS subsets — indented, only enabled when CAMELS ticked
-        camels_items = [
-            ("Capital Adequacy (C)",           "s_capital"),
-            ("Asset Quality (A)",              "s_asset"),
-            ("Management (M)",                 "s_mgmt"),
-            ("Earnings (E)",                   "s_earn"),
-            ("Liquidity (L)",                  "s_liq"),
-            ("Sensitivity to market risk (S)", "s_sens"),
-        ]
-        # Use a container with left padding to indent all subset checkboxes
-        with st.container():
-            st.markdown('<div style="margin-left:24px;padding-left:8px;border-left:2px solid #e5e7eb;">', unsafe_allow_html=True)
-            for label, key in camels_items:
-                st.checkbox(label, value=False, disabled=not crit_camels, key=key)
-            st.markdown('</div>', unsafe_allow_html=True)
+        # CAMELS subsets — only shown AND enabled when CAMELS is ticked
+        if crit_camels:
+            camels_items = [
+                ("Capital Adequacy (C)",           "s_capital"),
+                ("Asset Quality (A)",              "s_asset"),
+                ("Management (M)",                 "s_mgmt"),
+                ("Earnings (E)",                   "s_earn"),
+                ("Liquidity (L)",                  "s_liq"),
+                ("Sensitivity to market risk (S)", "s_sens"),
+            ]
+            with st.container():
+                st.markdown('<div style="margin-left:24px;padding-left:8px;border-left:2px solid #e5e7eb;">', unsafe_allow_html=True)
+                for label, key in camels_items:
+                    st.checkbox(label, value=False, key=key)
+                st.markdown('</div>', unsafe_allow_html=True)
 
         # Technical Default — permanently disabled
         st.markdown("""
