@@ -212,17 +212,17 @@ all_years = list(range(2010, 2025))
 # ─────────────────────────────────────────────────────────────────────────────
 # HEADER + AVATAR (no popup)
 # ─────────────────────────────────────────────────────────────────────────────
-st.markdown('<div class="header-title">Screening and Analytics</div>', unsafe_allow_html=True)
-st.markdown('<hr style="margin-top:4px;margin-bottom:14px;border-color:#1a1a2e">', unsafe_allow_html=True)
-
-hcol1, hcol2 = st.columns([20, 1])
-with hcol2:
-    st.markdown("""
-    <div style="width:42px;height:42px;border-radius:50%;border:2px solid #555;
-                background:#fff;display:flex;align-items:center;justify-content:center;
-                font-size:1.4rem;cursor:default;box-shadow:0 2px 6px rgba(0,0,0,0.12)">
-      👤
-    </div>""", unsafe_allow_html=True)
+st.markdown("""
+<div style="display:flex;align-items:center;justify-content:space-between;
+            padding-bottom:6px;border-bottom:2px solid #1a1a2e;margin-bottom:14px;">
+  <span style="font-size:1.2rem;font-weight:700;color:#1a1a2e;">Screening and Analytics</span>
+  <div style="width:42px;height:42px;border-radius:50%;border:2px solid #555;
+              background:#fff;display:flex;align-items:center;justify-content:center;
+              font-size:1.4rem;cursor:default;box-shadow:0 2px 6px rgba(0,0,0,0.12);">
+    👤
+  </div>
+</div>
+""", unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # SIDEBAR FILTERS
@@ -258,17 +258,30 @@ with st.sidebar:
         camels_state    = st.session_state.get("crit_camels",    False)
         stability_state = st.session_state.get("crit_stability", False)
 
-        # Bank Stability: render native checkbox (label visible) + floating tooltip icon
+        # Bank Stability: hide native label, render full row as HTML overlay
+        st.markdown("""
+        <style>
+        div[data-testid="stCheckbox"]:has(input[aria-label="Bank Stability"]) label p {
+            visibility: hidden; font-size: 0;
+        }
+        div[data-testid="stCheckbox"]:has(input[aria-label="Bank Stability"]) {
+            display: flex; align-items: center;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
         crit_stability = st.checkbox(
             "Bank Stability",
             value=stability_state,
             disabled=camels_state,
             key="crit_stability"
         )
-        # Float the "i" icon to sit right after the label text using negative margin
+        # Replace the hidden label with our inline label + tooltip icon
         st.markdown("""
-        <div style="margin-top:-30px; margin-left:136px; display:inline-block;">
-          <div class="tooltip-wrap">
+        <div style="margin-top:-28px; margin-left:28px; display:flex; align-items:center;
+                    gap:4px; font-size:0.9rem; line-height:1; pointer-events:none;">
+          <span>Bank Stability</span>
+          <div class="tooltip-wrap" style="pointer-events:all; line-height:1;">
             <span class="info-icon">i</span>
             <div class="tooltip-box">
               <b>Measured using the Z-score</b>, which captures the buffer
@@ -280,7 +293,7 @@ with st.sidebar:
             </div>
           </div>
         </div>
-        <div style="height:4px"></div>
+        <div style="height:6px"></div>
         """, unsafe_allow_html=True)
 
         # CAMELS — disabled when Bank Stability is ticked
